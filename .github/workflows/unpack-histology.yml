@@ -1,4 +1,4 @@
-.name: Unpack Aceapp Histology ZIP
+name: Unpack Aceapp Histology ZIP
 
 on:
   push:
