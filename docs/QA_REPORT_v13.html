@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aceapp Histology v13 — QA Report</title>
+<style>
+:root{--bg:#061412;--panel:#0d211f;--line:#21423e;--text:#eafffb;--muted:#9bbdb8;--mint:#2dd4bf;--good:#8ff0b0;--warn:#ffe083;--hold:#ffc1e3}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -15%,#17453e,#071513 42%,#040b0a);color:var(--text);font-family:Inter,system-ui,sans-serif}
+main{max-width:1080px;margin:auto;padding:30px 18px 70px}h1{font-size:30px;margin:0 0 7px}.sub{color:var(--muted);line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin:22px 0}.stat{background:rgba(13,33,31,.9);border:1px solid var(--line);border-radius:15px;padding:13px}
+.stat strong{display:block;font-size:22px}.stat small{color:var(--muted)}section{background:rgba(13,33,31,.88);border:1px solid var(--line);border-radius:18px;padding:17px;margin:13px 0}
+h2{font-size:18px;margin:0 0 10px}p,li,td{font-size:13px;line-height:1.55;color:var(--muted)}.good{color:var(--good)}.warn{color:var(--warn)}.hold{color:var(--hold)}
+table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:#dffbf6;font-size:12px}
+.badge{display:inline-block;padding:4px 7px;border-radius:999px;background:#153e2d;color:var(--good);font-size:10px;font-weight:800}.note{border-left:3px solid var(--mint);padding-left:12px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+</style></head><body><main>
+<h1>Aceapp Histology v13 · Precision Gap Closure QA</h1>
+<p class="sub">This pass focused on difficult remaining gaps where the difference between “an available image” and “a defensible practical image” matters. Three concepts were promoted to graded practice; several tempting sources were explicitly rejected or kept review-only.</p>
+
+<div class="stats">
+<div class="stat"><strong>18</strong><small>modules</small></div>
+<div class="stat"><strong>99</strong><small>trainable patterns</small></div>
+<div class="stat"><strong>9</strong><small>preview/held patterns</small></div>
+<div class="stat"><strong>47</strong><small>learning batches</small></div>
+<div class="stat"><strong>51</strong><small>comparison sets</small></div>
+<div class="stat"><strong>192</strong><small>real-image variants</small></div>
+</div>
+
+<section><h2>Validation <span class="badge">PASS</span></h2>
+<p>All eight JavaScript blocks passed Node syntax validation. The fully patched data model also executed successfully with <strong>no duplicate item IDs, no broken batch references, no broken comparison references, and no self-comparisons</strong>.</p>
+</section>
+
+<section><h2>M10 · Urinary System</h2>
+<p><strong class="good">Renal corpuscle is now graded.</strong> The source is a 1546×1201 real renal-corpuscle micrograph using PAS. The card explicitly says PAS so students are not taught that the appearance is routine H&E.</p>
+<p>The new kidney batch is <strong>medulla → renal tubules → renal corpuscle</strong>, followed by ureter vs bladder. A new renal-corpuscle-vs-tubules comparison reinforces “glomerular tuft inside Bowman’s space” versus an epithelial tube.</p>
+<p><strong class="hold">PCT vs DCT remains held.</strong> The dedicated PCT source can still be reviewed, but the only readily available field explicitly marking both PCT and DCT is annotated and low resolution. v13 does not turn that into a graded unknown.</p>
+</section>
+
+<section><h2>M11 · Endocrine source audit</h2>
+<p><strong class="hold">Posterior pituitary remains held.</strong> The apparently attractive 2996×1562 “Pituitary histology” candidate was visually audited and is actually a hand-drawn teaching plate. It is therefore rejected as a practical micrograph despite its resolution and permissive reuse terms.</p>
+</section>
+
+<section><h2>M12 · Lymphoid / Immune</h2>
+<p>A new <strong>human H&E Hassall-corpuscle review card</strong> is included. It is explicitly human and useful for structure-level learning, but it stays review-only because a close-up Hassall corpuscle does not replace a clean low-power human thymus overview.</p>
+<p><strong class="hold">Whole thymus and routine-H&E tonsil remain on hold.</strong> The labelled human thymus field is unsuitable for unknown-slide testing, and the high-resolution file named “Histology of palatine tonsil” was visually confirmed to be a labelled hand drawing rather than a micrograph.</p>
+</section>
+
+<section><h2>M13 · Integumentary System</h2>
+<p><strong class="good">Apocrine sweat gland is now graded.</strong> The human axillary histology field shows the visual features we actually want students to recognize: large lumina, abundant eosinophilic secretory cytoplasm and apical secretory blebs.</p>
+<p><strong class="hold">Eccrine remains review-only.</strong> The available 4912×3264 real histology file is useful, but the image itself contains a pointer and text overlay. v13 keeps it as source review instead of presenting it as an unknown practical slide.</p>
+</section>
+
+<section><h2>M16 · Female Reproductive System</h2>
+<p><strong class="good">Vagina is now graded.</strong> The primary source is a 2816×2112 public-domain human vaginal-wall micrograph. An independent human histology field is retained as a second variant.</p>
+<p>The female module is now split into four cleaner batches: <strong>ovary/tube → endometrial phase → cervix/vagina → mammary states</strong>. A dedicated cervix-vs-vagina comparison is active: cervix is identified through transformation-zone or mucinous-gland context, whereas vagina shows gland-free nonkeratinized stratified squamous mucosa.</p>
+</section>
+
+<section><h2>What v13 deliberately did not “complete”</h2>
+<table>
+<tr><th>Gap</th><th>Decision</th><th>Reason</th></tr>
+<tr><td>PCT vs DCT</td><td class="hold">HOLD</td><td>No matched pair of unequivocal unknown real fields yet.</td></tr>
+<tr><td>Posterior pituitary</td><td class="hold">HOLD</td><td>Best recent candidate audited as a drawing, not a micrograph.</td></tr>
+<tr><td>Whole human thymus</td><td class="hold">HOLD</td><td>Clean low-power human overview still missing.</td></tr>
+<tr><td>Routine-H&E tonsil</td><td class="hold">HOLD</td><td>High-resolution candidate is a labelled drawing; IHC is context only.</td></tr>
+<tr><td>Eccrine</td><td class="hold">HOLD</td><td>Real field has pointer/text overlay.</td></tr>
+<tr><td>Capillary</td><td class="hold">HOLD</td><td>Canonical routine tissue-section field still missing.</td></tr>
+<tr><td>Liver</td><td class="hold">HOLD</td><td>Current strong-license source has surgical-specimen provenance; generic H&E alternative is too low-resolution for organ architecture.</td></tr>
+</table>
+</section>
+
+<section><h2>Next highest-value pass</h2>
+<p>The remaining hard targets are now concentrated enough that the next pass should be almost entirely source hunting: <strong>a matched PCT/DCT pair, clean posterior pituitary, low-power human thymus, routine-H&E palatine tonsil, annotation-free eccrine, canonical capillary tissue section, and a stronger normal liver architecture set</strong>.</p>
+</section>
+</main></body></html>

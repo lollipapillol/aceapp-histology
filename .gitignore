@@ -1,0 +1,13 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local temporary files
+*.tmp
+*.log
+
+# Never commit private Firebase Admin credentials
+*service-account*.json
+firebase-admin*.json
