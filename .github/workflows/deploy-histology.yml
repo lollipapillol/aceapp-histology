@@ -1,0 +1,388 @@
+ACEAPP HISTOLOGY — DEVELOPMENT / DEPLOYMENT WORKFLOW
+
+You are working on the SEPARATE repository:
+
+aceapp-histology
+
+GOAL
+Turn the supplied Aceapp Histology v13 index.html into the deployable
+Histology website while preserving the complete existing learning system.
+
+IMPORTANT
+This is a separate repository from Aceapp Anatomy, but it belongs to the
+same Aceapp ecosystem.
+
+Do not rebuild the app from scratch.
+
+==================================================
+1. PRESERVE THE CURRENT HISTOLOGY APP
+==================================================
+
+Preserve all existing M01–M18 modules and the validated Histology behavior:
+
+- continuous visual learning cards
+- learn entire batch before quiz
+- shuffled quiz at end of batch
+- image → name questions
+- name → image questions
+- real-micrograph rotation
+- locked image variant during each question
+- Compare mode
+- Spotter mode
+- weak-spot repair
+- Stats
+- mastery tracking
+- dark/light UI
+- real image source/license metadata
+- BUILDING / preview-only / review-only states
+
+Histology must remain VISUAL-FIRST.
+
+Do not add long lectures, textbook discussions, or theory-heavy pages.
+
+Another Aceapp product will handle lectures/discussions.
+
+Do not promote review-only images into graded practice merely to make a
+module look complete.
+
+Histologic precision is more important than completion percentage.
+
+==================================================
+2. FIREBASE — REUSE ANATOMY FIREBASE
+==================================================
+
+DO NOT create another Firebase project.
+
+Reuse the existing Aceapp Firebase project:
+
+Project ID:
+aceapp-70837
+
+Use the SAME Firebase Authentication as Aceapp Anatomy.
+
+The objective is:
+
+ONE ACEAPP ACCOUNT
+→ Anatomy
+→ Histology
+→ later Parasitology
+→ later Biochemistry
+
+Do not create separate user accounts for each subject.
+
+==================================================
+3. KEEP ANATOMY AND HISTOLOGY PROGRESS SEPARATE
+==================================================
+
+Existing Anatomy data currently uses:
+
+users/{uid}
+
+and Anatomy progress may exist inside:
+
+users/{uid}.progress
+
+DO NOT overwrite or restructure that data.
+
+Histology must save its data separately at:
+
+users/{uid}/subjects/histology
+
+Recommended Histology document:
+
+users/{uid}/subjects/histology
+
+{
+  subject: "histology",
+  schemaVersion: 1,
+
+  progress: {
+    seen: [],
+    items: {},
+    batchPasses: [],
+    misses: [],
+    streak: 0,
+    totalAttempts: 0,
+    totalCorrect: 0
+  },
+
+  profileName: "",
+  updatedAt: serverTimestamp()
+}
+
+This architecture should allow future documents such as:
+
+users/{uid}/subjects/parasitology
+users/{uid}/subjects/biochemistry
+
+without modifying Anatomy.
+
+==================================================
+4. USE THE INCLUDED FIRESTORE RULES
+==================================================
+
+Use the included:
+
+firestore.rules
+
+These rules must preserve current Anatomy access AND permit:
+
+users/{uid}/subjects/histology
+
+Never replace the Firebase rules with Histology-only rules that break Anatomy.
+
+Never allow one authenticated user to access another user's subject progress.
+
+Anonymous authentication should remain disabled unless explicitly changed
+later.
+
+==================================================
+5. ADD FIREBASE AUTH TO HISTOLOGY
+==================================================
+
+Use the existing Anatomy authentication flow as the behavioral reference.
+
+Implement:
+
+- Create account
+- Login
+- Logout
+- Firebase auth-state restoration
+- Email/password authentication
+- persistent login
+
+Aceapp should feel like ONE ecosystem.
+
+If someone already has an Anatomy Aceapp account, the SAME credentials
+should work in Histology.
+
+Do not create a separate Histology authentication database.
+
+==================================================
+6. MIGRATE CURRENT LOCAL HISTOLOGY PROGRESS
+==================================================
+
+The existing Histology app currently stores progress locally under:
+
+ace-histology-progress-v1
+
+When a user signs in:
+
+IF cloud Histology progress does not exist:
+→ migrate/upload the local Histology progress.
+
+IF cloud progress already exists:
+→ load cloud progress.
+→ safely merge non-conflicting progress if appropriate.
+→ never replace stronger mastery data with weaker data.
+
+Use updatedAt/schemaVersion to support future migrations.
+
+Do not upload on every tap.
+
+Debounce cloud writes.
+
+Example:
+
+answer questions locally
+→ update local state immediately
+→ queue cloud sync
+→ write consolidated progress after a short debounce
+
+==================================================
+7. LOGOUT BEHAVIOR
+==================================================
+
+When the user logs out:
+
+- Firebase cloud data remains intact.
+- Signed-in Histology progress should disappear from the current local UI.
+- Do not delete the cloud document.
+- Do not expose the previous user's progress to the next person using
+  the same device.
+
+==================================================
+8. REPOSITORY STRUCTURE
+==================================================
+
+Repository name:
+
+aceapp-histology
+
+Keep at minimum:
+
+index.html
+netlify.toml
+firestore.rules
+FIREBASE_SETUP.md
+README.md
+docs/
+assets/
+
+Do not move Histology into the Anatomy repository.
+
+Do not split Histology into several repositories yet.
+
+==================================================
+9. NETLIFY
+==================================================
+
+Create a SEPARATE Netlify site for Histology.
+
+Do not attach Histology to the Anatomy Netlify deployment.
+
+Connect:
+
+GitHub:
+aceapp-histology
+
+→
+
+Netlify:
+Aceapp Histology
+
+Publish directory:
+
+.
+
+Use the included netlify.toml.
+
+After Netlify gives the Histology URL:
+
+Firebase Console
+→ Authentication
+→ Settings
+→ Authorized domains
+→ Add the Histology Netlify domain.
+
+Do not remove the Anatomy domain.
+
+==================================================
+10. REAL MICROGRAPH POLICY
+==================================================
+
+Preserve all source/license metadata.
+
+During development, remote Wikimedia image URLs may continue to work.
+
+For final production, approved micrographs should eventually be downloaded
+and hosted by Aceapp rather than permanently hotlinked.
+
+Do not substitute diagrams for practical micrographs just because the
+diagram has an easier license.
+
+Do not promote pathological images into normal Histology lessons.
+
+Do not use NC / educational-use-only images in a commercially deployable app.
+
+==================================================
+11. HISTOLOGY QA RULE
+==================================================
+
+A graded image must support the EXACT question being asked.
+
+Examples:
+
+PCT vs DCT
+→ do not grade until both are unequivocal.
+
+Thymus
+→ a Hassall corpuscle close-up alone does not prove whole-organ recognition.
+
+Cervix vs vagina
+→ enough organ context must be present.
+
+Artery vs vein
+→ do not rely only on lumen shape.
+
+Thick vs thin skin
+→ use whole-skin architecture.
+
+Fibrocartilage
+→ identify collagen bundles + chondrocytes in lacunae,
+  not stain color alone.
+
+==================================================
+12. RELEASE QA
+==================================================
+
+Before every release:
+
+Open every module M01–M18.
+
+Test every non-building batch.
+
+Complete at least one full batch:
+Learn cards
+→ final shuffled quiz
+→ result screen.
+
+Verify:
+
+- image → name
+- name → image
+- wrong-answer explanation
+- correct visual discriminator
+- real image rotation
+- locked image during question
+- Compare mode
+- Spotter mode
+- weak-spot repair
+- Stats updates
+- mobile layout
+- Android narrow screen
+- dark mode
+- light mode
+- Back navigation
+- batch progression
+- review-only items excluded from graded practice
+
+Then test Firebase:
+
+New account
+→ Histology document created.
+
+Existing Anatomy account
+→ same credentials work.
+
+Complete Histology questions
+→ only users/{uid}/subjects/histology changes.
+
+Verify:
+users/{uid}.progress
+is NOT overwritten.
+
+Refresh browser
+→ Histology progress returns.
+
+Open another browser/device
+→ login
+→ Histology progress restores.
+
+Logout
+→ cloud data remains
+→ signed-in progress disappears from local UI.
+
+Finally check browser console for uncaught errors.
+
+==================================================
+DELIVERABLE
+==================================================
+
+Return a deploy-ready Aceapp Histology repository with:
+
+- current Histology v13 functionality preserved
+- shared Aceapp Firebase Authentication
+- cloud Histology progress at:
+  users/{uid}/subjects/histology
+- local → cloud progress migration
+- debounced Firestore syncing
+- safe logout
+- firestore.rules
+- netlify.toml
+- README/setup instructions
+- no Anatomy data regression
+- release QA report
+
+Do not redesign or simplify validated functionality unless fixing an actual
+bug.
