@@ -1,9 +1,3 @@
 [build]
-  publish = "."
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+  command = "rm -rf deploy && mkdir -p deploy && unzip -q Aceapp-Parasitology-v42-prod1-aceapp-para.zip -d deploy"
+  publish = "deploy"
