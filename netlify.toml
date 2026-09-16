@@ -1,3 +1,4 @@
 [build]
-  command = "rm -rf deploy && mkdir -p deploy && unzip -q Aceapp-Parasitology-v42-prod1-aceapp-para.zip -d deploy"
+  base = "."
+  command = "rm -rf deploy && mkdir -p deploy && unzip -q Aceapp-Parasitology-v42-prod1-aceapp-para.zip -d deploy && test -f deploy/index.html"
   publish = "deploy"
