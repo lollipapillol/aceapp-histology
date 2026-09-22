@@ -1,0 +1,158 @@
+name: Unpack Aceapp site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "aceapp-site.zip"
+
+  workflow_dispatch:
+
+# Required so the workflow can commit the extracted /site folder.
+permissions:
+  contents: write
+
+concurrency:
+  group: aceapp-unpack-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract Aceapp package safely
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f aceapp-site.zip ]; then
+            echo "ERROR: aceapp-site.zip was not found at the repository root."
+            exit 1
+          fi
+
+          rm -rf site
+          mkdir -p site
+
+          python3 <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, BadZipFile
+          import os
+          import shutil
+
+          archive = Path("aceapp-site.zip")
+          output = Path("site")
+          output_resolved = output.resolve()
+
+          try:
+              with ZipFile(archive) as zf:
+                  bad = zf.testzip()
+
+                  if bad:
+                      raise RuntimeError(f"Corrupt ZIP member: {bad}")
+
+                  for member in zf.infolist():
+
+                      # Ignore common macOS metadata.
+                      if member.filename.startswith("__MACOSX/"):
+                          continue
+
+                      target = (output / member.filename).resolve()
+                      allowed_prefix = str(output_resolved) + os.sep
+
+                      if (
+                          target != output_resolved
+                          and not str(target).startswith(allowed_prefix)
+                      ):
+                          raise RuntimeError(
+                              f"Unsafe ZIP path: {member.filename}"
+                          )
+
+                      zf.extract(member, output)
+
+          except BadZipFile as exc:
+              raise SystemExit(
+                  f"aceapp-site.zip is not a valid ZIP: {exc}"
+              )
+
+          # Allow releases packaged either:
+          # 1. directly at ZIP root
+          # 2. inside one wrapper folder
+          if not (output / "index.html").is_file():
+
+              visible = [
+                  p for p in output.iterdir()
+                  if p.name not in {"__MACOSX", ".DS_Store"}
+              ]
+
+              if (
+                  len(visible) == 1
+                  and visible[0].is_dir()
+                  and (visible[0] / "index.html").is_file()
+              ):
+                  wrapper = visible[0]
+                  temp = Path(".aceapp-unpack-temp")
+
+                  if temp.exists():
+                      shutil.rmtree(temp)
+
+                  temp.mkdir()
+
+                  for child in wrapper.iterdir():
+                      shutil.move(
+                          str(child),
+                          temp / child.name
+                      )
+
+                  shutil.rmtree(output)
+                  output.mkdir()
+
+                  for child in temp.iterdir():
+                      shutil.move(
+                          str(child),
+                          output / child.name
+                      )
+
+                  shutil.rmtree(temp)
+
+          # Remove Finder metadata if present.
+          for junk in output.rglob(".DS_Store"):
+              junk.unlink(missing_ok=True)
+
+          if not (output / "index.html").is_file():
+              raise SystemExit(
+                  "No index.html found. Put index.html at the ZIP root, "
+                  "or inside one top-level folder."
+              )
+
+          print("Aceapp package validated successfully.")
+          print(
+              f"Publish entry: "
+              f"{(output / 'index.html').resolve()}"
+          )
+          PY
+
+      - name: Commit generated site only when it changed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A site
+
+          if git diff --cached --quiet; then
+            echo "The extracted site is unchanged; nothing to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: unpack Aceapp site"
+          git push
