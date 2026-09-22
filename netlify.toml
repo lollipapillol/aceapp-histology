@@ -1,4 +1,28 @@
+# Aceapp Netlify configuration
+#
+# Normal update flow:
+#   1. Replace aceapp-site.zip in GitHub.
+#   2. GitHub Actions extracts it to /site automatically.
+#   3. The workflow commits /site.
+#   4. Netlify deploys that generated /site commit.
+
 [build]
-  base = "."
-  command = "rm -rf deploy && mkdir -p deploy && unzip -q Aceapp-Parasitology-v42-prod1-aceapp-para.zip -d deploy && test -f deploy/index.html"
-  publish = "deploy"
+  publish = "site"
+  command = "test -f site/index.html"
+
+  # Skip the first commit that only replaces aceapp-site.zip.
+  # Build only when the generated site/ output (or this config) changes.
+  ignore = "if [ ! -f site/index.html ]; then exit 0; fi; if [ -z \"$CACHED_COMMIT_REF\" ] || [ -z \"$COMMIT_REF\" ]; then exit 1; fi; git diff --quiet \"$CACHED_COMMIT_REF\" \"$COMMIT_REF\" -- site/ netlify.toml"
+
+[build.processing]
+  skip_processing = false
+
+[build.processing.html]
+  pretty_urls = true
+
+[[headers]]
+  for = "/*"
+
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
